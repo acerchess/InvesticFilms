@@ -72,6 +72,7 @@ namespace InvesticFilms
             var UniqueFilms = AllFilms.Distinct().ToList();
 
             Console.WriteLine($"Total Films: {UniqueFilms.Count}\n");
+            
             Console.WriteLine($"Film names:");
             foreach (var film in UniqueFilms)
             {
@@ -88,6 +89,7 @@ namespace InvesticFilms
                 details.Characters = actors;
                 FilmDetails.Add(details);
             }
+            Console.WriteLine($"See film details below:\n");
 
             foreach (var filmCharacters in FilmDetails)
             {
