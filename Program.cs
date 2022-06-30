@@ -89,7 +89,7 @@ namespace InvesticFilms
                 details.Characters = actors;
                 FilmDetails.Add(details);
             }
-            Console.WriteLine($"See film details below:\n");
+            Console.WriteLine($"\nSee film details below:");
 
             foreach (var filmCharacters in FilmDetails)
             {
