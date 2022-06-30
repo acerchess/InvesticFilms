@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Collections;
+using Newtonsoft.Json.Linq;
 
 namespace InvesticFilms
 {
@@ -15,90 +16,98 @@ namespace InvesticFilms
     {
         static void Main(string[] args)
         {
-            GetFilmBuddies();
+            Console.WriteLine("\nHello");
+            Console.WriteLine("Obtaining film details, please wait...\n");
+
+            var characters = GetFilmDetailsFromApi();
+            
+            DisplayFilmDetails(characters);
+
+            Console.ReadLine();
         }
 
-        private static void GetFilmBuddies()
+        private static List<Character> GetFilmDetailsFromApi()
         {
-            int pageNumber = 1;
-            string nextUrl = "https://swapi.dev/api/people?page=1"; 
-            List<string> Titles = new List<string>();
-            int totalPages = 1;
-            List<Character> Characters = new List<Character>();
+
+            string url = "https://swapi.dev/api/people?page=1";
+
+            List<Character> characters = new List<Character>();
+
             do
             {
                 using (WebClient client = new WebClient())
-                using (var stream = client.OpenRead(nextUrl))
+                using (var stream = client.OpenRead(url))
                 {
                     using (var reader = new StreamReader(stream))
                     {
-                        //var jObject = Newtonsoft.Json.Linq.JObject.Parse(reader.ReadLine());
-
                         var jsonString = reader.ReadLine();
-                        var data = JsonConvert.DeserializeObject<dynamic>(jsonString);
-                        nextUrl = (string)data.next;
+                        //  var data = JsonConvert.DeserializeObject<dynamic>(jsonString);
 
-                    //    totalPages = (int)results.total_pages;
-
-                        foreach (var info in data.results)
+                        data data = JsonConvert.DeserializeObject<data>(jsonString);
+                        url = data.next;
+                        foreach (var character in data.results)
                         {
+                            characters.Add(new Character
+                            {
+                                CharacterName = character.name,
+                                Films = character.films.ToList()
 
-                            string characterName = (string)info.name;
-
-                            Characters.Add(new Character { Name = characterName });
-                            var films = info.films;
-
-                            //foreach (var title in info.films)
-                            //{
-
-                            //}
-                            //string story_title = (string)info.story_title;
-
-                            //if (!string.IsNullOrWhiteSpace(title))
-                            //{
-                            //    Titles.Add(title);
-                            //}
-                            //else if (!string.IsNullOrWhiteSpace(story_title))
-                            //{
-                            //    Titles.Add(story_title);
-                            //}
-
-
+                            });
                         }
                     }
                 }
-                if (string.IsNullOrWhiteSpace(nextUrl))
-                {
-                    break;
-                }
-                //pageNumber++;
-            } while (true);
 
-            var characters = Characters;
+            } while (!string.IsNullOrWhiteSpace(url));
+
+            return characters;
+        }
+
+        private static void DisplayFilmDetails(List<Character> characters)
+        {
+            Console.WriteLine("Displaying Film Results:\n");
 
 
-            foreach (var character in Characters)
+            var AllFilms = characters.SelectMany(x => x.Films).ToList();
+
+            var UniqueFilms = AllFilms.Distinct().ToList();
+
+            Console.WriteLine($"Total Films: {UniqueFilms.Count}\n");
+            Console.WriteLine($"Film names:");
+            foreach (var film in UniqueFilms)
             {
-                Console.WriteLine($"Name: {character.Name} ");
+                Console.WriteLine($"  {film}");
             }
+
+            List<FilmDetails> FilmDetails = new List<FilmDetails>();
+
+            foreach (var film in UniqueFilms)
+            {
+                var details = new FilmDetails();
+                details.Film = film;
+                var actors = characters.Where(x => x.Films.Contains(film)).Select(x => x.CharacterName).ToList();
+                details.Characters = actors;
+                FilmDetails.Add(details);
+            }
+
+            foreach (var filmCharacters in FilmDetails)
+            {
+                Console.WriteLine($"\nFilm Name:{filmCharacters.Film}");
+                Console.WriteLine($"  Character Count:  {filmCharacters.TotalCharacters}");
+                Console.WriteLine($"  Character Names:");
+                if (filmCharacters.Characters.Count > 0)
+                {
+                    foreach (var charactor in filmCharacters.Characters)
+                    {
+                        Console.WriteLine($"     {charactor}");
+                    }
+                }
+                
+            }
+
+            Console.WriteLine("\n Please scroll up to view all film details.\n Thank you");
+
         }
     }
 
-
-    public class Featured
-    {
-        public Character character { get; set; }
-
-        public List<Film> Films { get; set; }
-    }
-    public class Character
-    {
-        public string Name { get; set; }
-    }
-
-    public class Film
-    {
-        public string Name { get; set; }
-    }
 
 }
